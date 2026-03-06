@@ -1,38 +1,40 @@
 from django.db import models
 
 
-class Producto(models.Model):
+class Programa(models.Model):
     nombre = models.CharField(max_length=100)
     descripcion = models.TextField()
-    precio = models.DecimalField(max_digits=8, decimal_places=2)
 
     def __str__(self):
         return self.nombre
 
 
-class Cliente(models.Model):
+class Curso(models.Model):
     nombre = models.CharField(max_length=100)
+    codigo = models.CharField(max_length=20, unique=True)
+    programa = models.ForeignKey(Programa, on_delete=models.CASCADE, related_name="cursos")
+
+    def __str__(self):
+        return f"{self.codigo} - {self.nombre}"
+
+
+class Estudiante(models.Model):
+    nombre = models.CharField(max_length=100)
+    apellido = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
-    fecha_registro = models.DateTimeField(auto_now_add=True)
-    activo = models.BooleanField(default=True)
-    
-    def __str__(self):
-        return f"{self.nombre} <{self.email}>"
-    
-class Pedido(models.Model):
-
-    ESTADOS = {
-    ("CREADO", "Creado"),
-    ("PAGADO", "Pagado"),
-    ("ENVIADO", "Enviado"),
-    ("CERRADO", "Cerrado"), 
-    }
-
-
-    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name="pedidos")
-    productos = models.ManyToManyField(Producto, related_name="pedidos")
-    fecha = models.DateTimeField(auto_now_add=True)
-    estado = models.CharField(max_length=7, choices=ESTADOS, default="CREADO")
+    codigo_estudiantil = models.CharField(max_length=20, unique=True)
 
     def __str__(self):
-        return f"Pedido#{self.pk} - {self.cliente.nombre} ({self.estado})"
+        return f"{self.nombre} {self.apellido}"
+
+
+class Inscripcion(models.Model):
+    estudiante = models.ForeignKey(Estudiante, on_delete=models.CASCADE, related_name="inscripciones")
+    curso = models.ForeignKey(Curso, on_delete=models.CASCADE, related_name="inscripciones")
+    fecha_inscripcion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("estudiante", "curso")  # Regla de negocio: no duplicados
+
+    def __str__(self):
+        return f"{self.estudiante} → {self.curso}"
